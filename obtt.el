@@ -43,6 +43,9 @@
 (defcustom obtt-seed-name ".obtt"
   "Name for the seed file")
 
+(defcustom obtt-project-directory (concat (getenv "HOME") "/projects")
+  "Directory for creating new projects")
+
 (defun obtt-parse-args (args-string)
   (split-string (string-trim args-string)))
 
@@ -97,17 +100,20 @@
     (yas-expand-snippet (obtt-read-template template))))
 
 ;;;###autoload
-(defun obtt-new (directory)
-  (interactive "DStarting directory: ")
-  (let ((seed-file (concat directory obtt-seed-name)))
-    (if (file-exists-p seed-file)
-        (message "Seed file already exists")
-      (with-current-buffer (find-file (concat directory obtt-seed-name))
-        (helm :sources (helm-build-sync-source "templates"
-                         :candidates (obtt-available-snippets)
-                         :action '(("Insert template" . obtt-insert-template)))
-              :buffer "*helm obtt*"
-              :prompt "Select template: ")))))
+(defun obtt-new (project-name)
+  (interactive "sName of project: ")
+  (let ((directory (concat obtt-project-directory "/" project-name)))
+    (when (not (file-directory-p directory))
+      (make-directory directory t))
+    (let ((seed-file (concat directory obtt-seed-name)))
+      (if (file-exists-p seed-file)
+          (message "Seed file already exists")
+        (with-current-buffer (find-file (concat directory "/" obtt-seed-name))
+          (helm :sources (helm-build-sync-source "templates"
+                           :candidates (obtt-available-snippets)
+                           :action '(("Insert template" . obtt-insert-template)))
+                :buffer "*helm obtt*"
+                :prompt "Select template: "))))))
 
 (provide 'obtt)
 
